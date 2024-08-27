@@ -9,7 +9,6 @@ function Flatten() {
       const inputObj = JSON.parse(input);
       const flattened = flattenObject(inputObj);
       const result = Object.entries(flattened).map(([key, value]) => {
-        // Ensure the value is properly formatted, preserving the entire string
         const formattedValue = typeof value === 'string' ? value : JSON.stringify(value);
         return `${key}\t${formattedValue}`;
       });
@@ -47,35 +46,33 @@ function Flatten() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h2 className="text-xl font-semibold text-gray-800 mb-4">Flatten JSON</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-4 md:p-6">
+      <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Flatten JSON</h2>
       <textarea
-        className="w-full p-2 border rounded mb-4"
-        rows="10"
+        className="w-full p-2 border rounded mb-4 text-sm md:text-base bg-white dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+        rows="8"
         value={input}
         onChange={(e) => setInput(e.target.value)}
         placeholder="Enter JSON to flatten"
       />
       <button
-        className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors mb-4"
+        className="w-full md:w-auto px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors mb-4"
         onClick={handleFlatten}
       >
         Flatten
       </button>
       <div className="mt-4">
-        <div className="flex justify-between items-center mb-2">
-          <h3 className="text-lg font-semibold text-gray-800">Flattened Key-Value Pairs</h3>
-          <div className="space-x-2">
-            <button
-              onClick={copyTranslations}
-              className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
-            >
-              Copy translations
-            </button>
-          </div>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-2 md:mb-0">Flattened Key-Value Pairs</h3>
+          <button
+            onClick={copyTranslations}
+            className="w-full md:w-auto px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+          >
+            Copy translations
+          </button>
         </div>
-        <pre className="bg-gray-100 p-4 rounded-md overflow-x-auto">
-          <code className="text-sm">{output}</code>
+        <pre className="bg-gray-100 dark:bg-gray-700 p-2 md:p-4 rounded-md overflow-x-auto text-xs md:text-sm">
+          <code className="text-gray-800 dark:text-gray-200">{output}</code>
         </pre>
       </div>
     </div>
