@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/vm-tooling/static/css/main.a10ab849.css",
+    "main.js": "/vm-tooling/static/js/main.3a7deed2.js",
+    "static/js/453.645c6e2c.chunk.js": "/vm-tooling/static/js/453.645c6e2c.chunk.js",
+    "index.html": "/vm-tooling/index.html",
+    "main.a10ab849.css.map": "/vm-tooling/static/css/main.a10ab849.css.map",
+    "main.3a7deed2.js.map": "/vm-tooling/static/js/main.3a7deed2.js.map",
+    "453.645c6e2c.chunk.js.map": "/vm-tooling/static/js/453.645c6e2c.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.a10ab849.css",
+    "static/js/main.3a7deed2.js"
+  ]
+}
