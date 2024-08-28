@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);  // Default to open
+  const [sidebarOpen, setSidebarOpen] = useState(false); 
   const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
