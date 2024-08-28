@@ -87,7 +87,7 @@ function Flatten() {
             <h2 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-white">Preview</h2>
             <button
               onClick={copyTranslations}
-              className="px-3 py-1 md:px-4 md:py-2 text-sm md:text-base bg-indigo-600 text-white rounded hover:bg-indigo-700 transition-colors"
+              className="px-3 py-1 md:px-4 md:py-2 text-sm md:text-base bg-violet-600 text-white rounded hover:bg-indigo-700 transition-colors"
             >
               Copy translations
             </button>
