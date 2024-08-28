@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { HomeIcon, DocumentIcon, CogIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, DocumentIcon } from '@heroicons/react/24/outline';
 
 function Sidebar({ isOpen, onClose }) {
   const [isTranslationsOpen, setIsTranslationsOpen] = useState(false);
@@ -58,13 +58,7 @@ function Sidebar({ isOpen, onClose }) {
               </li>
             </ul>
           )}
-        </li>
-        <li>
-          <Link to="/settings" className="flex items-center space-x-2 text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400" onClick={onClose}>
-            <CogIcon className="h-5 w-5" />
-            <span>Settings</span>
-          </Link>
-        </li>
+        </li> 
       </ul>
     </nav>
   );
