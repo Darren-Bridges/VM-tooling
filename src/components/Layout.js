@@ -3,10 +3,10 @@ import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    const isDarkMode = localStorage.getItem('darkMode') !== 'false';
     setDarkMode(isDarkMode);
     document.documentElement.classList.toggle('dark', isDarkMode);
   }, []);
@@ -39,7 +39,7 @@ const Layout = ({ children }) => {
           onClick={toggleDarkMode}
           className="fixed bottom-4 right-4 p-2 bg-gray-200 dark:bg-gray-700 rounded-full"
         >
-          {darkMode ? '🌞' : '🌙'}
+          {darkMode ? '🌙' : '🌞'}
         </button>
       </div>
     </div>
