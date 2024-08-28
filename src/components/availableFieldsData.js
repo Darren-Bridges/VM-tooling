@@ -29,7 +29,7 @@ const availableFieldsData = [
   {
     groupName: "Order information",
     fields: [
-      { id: 'grouped-deals-and-bundles', name: 'Grouped Deals + Bundles', placeholder: '2x Burger + $20.00\n....Ketchup\n....Well done\n2x Fries + $5.00\n1x Coke + $2.00' },
+      { id: 'grouped-deals-and-bundles', name: 'Grouped Deals + Bundles', placeholder: '2x Burger + £20.00\n....Ketchup\n....Well done\n2x Fries + £5.00\n1x Coke + £2.00' },
       { id: 'order-accessories', name: 'Order Accessories', placeholder: '1x Bag' },
       { id: 'order-note', name: 'Order Note', placeholder: 'No pickles, please' },
     ]
@@ -37,13 +37,13 @@ const availableFieldsData = [
   {
     groupName: "Payment Details",
     fields: [
-      { id: 'subtotal', name: 'Subtotal', placeholder: '$13.98' },
-      { id: 'delivery-fee', name: 'Delivery Fee', placeholder: '$2.00' },
-      { id: 'service-charge', name: 'Service Charge', placeholder: '$1.00' },
-      { id: 'discount', name: 'Discount', placeholder: '-$2.00' },
-      { id: 'refunds', name: 'Refunds', placeholder: '$0.00' },
-      { id: 'total', name: 'Total', placeholder: '$14.98' },
-      { id: 'vat-amount', name: 'VAT Amount', placeholder: '$1.50' },
+      { id: 'subtotal', name: 'Subtotal', placeholder: '£13.98' },
+      { id: 'delivery-fee', name: 'Delivery Fee', placeholder: '£2.00' },
+      { id: 'service-charge', name: 'Service Charge', placeholder: '£1.00' },
+      { id: 'discount', name: 'Discount', placeholder: '-£2.00' },
+      { id: 'refunds', name: 'Refunds', placeholder: '£0.00' },
+      { id: 'total', name: 'Total', placeholder: '£14.98' },
+      { id: 'vat-amount', name: 'VAT Amount', placeholder: '£1.50' },
     ]
   },
   {

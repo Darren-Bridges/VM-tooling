@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { DragDropContext } from 'react-beautiful-dnd';
 import { v4 as uuidv4 } from 'uuid';
 import AvailableFields from './AvailableFields';
@@ -6,10 +6,13 @@ import TemplateBuilder from './TemplateBuilder';
 import ReceiptPreview from './ReceiptPreview';
 import generateXML from './generateXML';
 import availableFieldsData from './availableFieldsData';
+import parseReceiptXML from './parseReceiptXML';
 
 const CustomerReceiptTemplateBuilder = () => {
   const [availableFields] = useState(availableFieldsData);
   const [template, setTemplate] = useState([]);
+  const [xmlInput, setXmlInput] = useState('');
+  const dialogRef = useRef(null);
 
   const onDragEnd = (result) => {
     const { source, destination } = result;
@@ -88,12 +91,56 @@ const CustomerReceiptTemplateBuilder = () => {
     setTemplate(template.filter(field => field.uniqueId !== uniqueId));
   };
 
+  const openImportDialog = () => {
+    dialogRef.current.showModal();
+  };
+
+  const closeImportDialog = () => {
+    dialogRef.current.close();
+    setXmlInput('');
+  };
+
+  const importTemplate = () => {
+    if (xmlInput.trim()) {
+      const importedFields = parseReceiptXML(xmlInput);
+      
+      // Create a lookup object for field data
+      const fieldDataLookup = availableFieldsData.flatMap(group => group.fields)
+        .reduce((acc, field) => {
+          acc[field.id] = field;
+          return acc;
+        }, {});
+
+      // Map imported fields to template format, preserving order, alignment, bold, and size
+      const newTemplate = importedFields
+        .filter(field => fieldDataLookup[field.id]) // Only include fields we have data for
+        .map(field => ({
+          ...fieldDataLookup[field.id],
+          uniqueId: uuidv4(),
+          alignment: field.alignment,
+          isBold: field.bold,
+          size: field.size
+        }));
+
+      setTemplate(newTemplate);
+      closeImportDialog();
+    }
+  };
+
   return (
-    <div className="p-4 bg-white dark:bg-gray-900">
-      <h1 className="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Customer Receipt Builder</h1>
-      <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+    <div className="p-4 bg-linear-gray-100 dark:bg-linear-gray-900">
+      <h1 className="text-2xl font-bold mb-2 text-linear-gray-800 dark:text-linear-gray-200">Customer Receipt Builder</h1>
+      <p className="mb-4 text-sm text-linear-gray-600 dark:text-linear-gray-400">
         Drag and drop or click fields from the left panel to build your receipt template. The preview on the right will update as you add fields.
       </p>
+      <div className="mb-4">
+        <button
+          onClick={openImportDialog}
+          className="px-4 py-2 bg-linear-blue-500 text-white rounded cursor-pointer hover:bg-linear-blue-600"
+        >
+          Import Template
+        </button>
+      </div>
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex space-x-4">
           <AvailableFields fields={availableFields} onFieldClick={onFieldClick} />
@@ -107,6 +154,33 @@ const CustomerReceiptTemplateBuilder = () => {
           <ReceiptPreview template={template} onCopyXML={copyXML} />
         </div>
       </DragDropContext>
+
+      <dialog
+        ref={dialogRef}
+        className="p-6 rounded-lg shadow-xl bg-white dark:bg-linear-gray-800 text-linear-gray-800 dark:text-linear-gray-200"
+      >
+        <h2 className="text-xl font-bold mb-4">Import XML Template</h2>
+        <textarea
+          value={xmlInput}
+          onChange={(e) => setXmlInput(e.target.value)}
+          className="w-full h-64 p-2 border border-linear-gray-300 dark:border-linear-gray-600 rounded mb-4 bg-linear-gray-50 dark:bg-linear-gray-700 text-linear-gray-800 dark:text-linear-gray-200"
+          placeholder="Paste your XML template here..."
+        />
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={closeImportDialog}
+            className="px-4 py-2 bg-linear-gray-200 dark:bg-linear-gray-600 text-linear-gray-800 dark:text-linear-gray-200 rounded hover:bg-linear-gray-300 dark:hover:bg-linear-gray-500"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={importTemplate}
+            className="px-4 py-2 bg-linear-blue-500 text-white rounded hover:bg-linear-blue-600"
+          >
+            Import
+          </button>
+        </div>
+      </dialog>
     </div>
   );
 };
