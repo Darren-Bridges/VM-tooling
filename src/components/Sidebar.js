@@ -16,19 +16,19 @@ function Sidebar({ isOpen, onClose }) {
     <>
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20"
+          className="fixed inset-0 bg-linear-gray-800 bg-opacity-75 z-20"
           onClick={onClose}
         ></div>
       )}
       <nav className={`
-        fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-gray-800 shadow-md transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-linear-gray-800 border-r border-linear-gray-200 dark:border-linear-gray-700 transform transition-transform duration-300 ease-in-out
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
-        <div className="flex justify-between items-center p-4 border-b dark:border-gray-700">
-          <h1 className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">VM Tooling</h1>
+        <div className="flex justify-between items-center p-4 border-b border-linear-gray-200 dark:border-linear-gray-700">
+          <h1 className="text-2xl font-bold text-linear-blue-500">VM Tooling</h1>
           <button 
             onClick={onClose} 
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-linear-gray-500 hover:text-linear-gray-600 dark:text-linear-gray-400 dark:hover:text-linear-gray-300"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -36,51 +36,54 @@ function Sidebar({ isOpen, onClose }) {
           </button>
         </div>
         <ul className="py-4">
-          <li>
-            <Link to="/" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700" onClick={onClose}>
-              <HomeIcon className="h-5 w-5 mr-2" />
-              Home
-            </Link>
-          </li>
-          <li>
-            <button
-              onClick={() => setIsTranslationsOpen(!isTranslationsOpen)}
-              className="w-full text-left px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-between"
-            >
-              <span className="flex items-center">
-                <LanguageIcon className="h-5 w-5 mr-2" />
-                Translations
-              </span>
-              <ChevronDownIcon className={`h-4 w-4 transform transition-transform ${isTranslationsOpen ? 'rotate-180' : ''}`} />
-            </button>
-            {isTranslationsOpen && (
-              <ul className="pl-4">
-                <li>
-                  <Link to="/translations/flatten" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700" onClick={onClose}>
-                    <ArrowsPointingInIcon className="h-5 w-5 mr-2" />
-                    Flatten
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/translations/unflatten" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700" onClick={onClose}>
-                    <ArrowsPointingOutIcon className="h-5 w-5 mr-2" />
-                    Unflatten
-                  </Link>
-                </li>
-              </ul>
-            )}
-          </li>
-          <li>
-            <Link to="/customer-receipt-template-builder" className="flex items-center px-4 py-2 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700" onClick={onClose}>
-              <DocumentTextIcon className="h-5 w-5 mr-2" />
-              Customer Receipt Template
-            </Link>
-          </li>
+          <SidebarItem to="/" icon={HomeIcon} text="Home" onClick={onClose} />
+          <SidebarItem
+            icon={LanguageIcon}
+            text="Translations"
+            isOpen={isTranslationsOpen}
+            onClick={() => setIsTranslationsOpen(!isTranslationsOpen)}
+          >
+            <SidebarSubItem to="/translations/flatten" icon={ArrowsPointingInIcon} text="Flatten" onClick={onClose} />
+            <SidebarSubItem to="/translations/unflatten" icon={ArrowsPointingOutIcon} text="Unflatten" onClick={onClose} />
+          </SidebarItem>
+          <SidebarItem to="/customer-receipt-template-builder" icon={DocumentTextIcon} text="Customer Receipt Template" onClick={onClose} />
         </ul>
       </nav>
     </>
   );
 }
+
+const SidebarItem = ({ to, icon: Icon, text, children, isOpen, onClick }) => (
+  <li>
+    {to ? (
+      <Link to={to} className="flex items-center px-4 py-2 text-linear-gray-700 hover:bg-linear-gray-100 dark:text-linear-gray-200 dark:hover:bg-linear-gray-700" onClick={onClick}>
+        <Icon className="h-5 w-5 mr-2" />
+        {text}
+      </Link>
+    ) : (
+      <button
+        onClick={onClick}
+        className="w-full text-left px-4 py-2 text-linear-gray-700 hover:bg-linear-gray-100 dark:text-linear-gray-200 dark:hover:bg-linear-gray-700 flex items-center justify-between"
+      >
+        <span className="flex items-center">
+          <Icon className="h-5 w-5 mr-2" />
+          {text}
+        </span>
+        <ChevronDownIcon className={`h-4 w-4 transform transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+    )}
+    {isOpen && children && <ul className="pl-4">{children}</ul>}
+  </li>
+);
+
+const SidebarSubItem = ({ to, icon: Icon, text, onClick }) => (
+  <li>
+    <Link to={to} className="flex items-center px-4 py-2 text-linear-gray-600 hover:bg-linear-gray-100 dark:text-linear-gray-300 dark:hover:bg-linear-gray-700" onClick={onClick}>
+      <Icon className="h-5 w-5 mr-2" />
+      {text}
+    </Link>
+  </li>
+);
 
 export default Sidebar;
 

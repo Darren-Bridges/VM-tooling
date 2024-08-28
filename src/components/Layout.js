@@ -21,28 +21,30 @@ const Layout = ({ children }) => {
   const toggleSidebar = () => setSidebarOpen(prev => !prev);
 
   return (
-    <div className={`flex h-screen ${darkMode ? 'dark' : ''}`}>
+    <div className={`flex h-screen ${darkMode ? 'dark' : ''} bg-linear-gray-50 dark:bg-linear-gray-900`}>
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900">
-        <header className="bg-white dark:bg-gray-800 shadow-sm p-4">
-          <button
-            onClick={toggleSidebar}
-            className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+      <div className="flex-1 flex flex-col">
+        <header className="bg-white dark:bg-linear-gray-800 border-b border-linear-gray-200 dark:border-linear-gray-700">
+          <div className="flex items-center justify-between px-4 py-3">
+            <button
+              onClick={toggleSidebar}
+              className="text-linear-gray-500 hover:text-linear-gray-600 dark:text-linear-gray-400 dark:hover:text-linear-gray-300"
+            >
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-full bg-linear-gray-200 dark:bg-linear-gray-700 text-linear-gray-500 dark:text-linear-gray-400"
+            >
+              {darkMode ? '🌙' : '🌞'}
+            </button>
+          </div>
         </header>
         <main className="flex-1 overflow-y-auto p-4 md:p-8">
           {children}
         </main>
-        <button
-          onClick={toggleDarkMode}
-          className="fixed bottom-4 right-4 p-2 bg-gray-200 dark:bg-gray-700 rounded-full"
-        >
-          {darkMode ? '🌙' : '🌞'}
-        </button>
       </div>
     </div>
   );
