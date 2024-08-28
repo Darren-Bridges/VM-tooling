@@ -15,7 +15,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/translations/flatten" element={<Flatten />} />
           <Route path="/translations/unflatten" element={<Unflatten />} />
-          <Route path="/customer-receipt-template" element={<CustomerReceiptTemplateBuilder />} />
+          <Route path="/customer-receipt-template-builder" element={<CustomerReceiptTemplateBuilder />} />
         </Routes>
       </Layout>
     </Router>
