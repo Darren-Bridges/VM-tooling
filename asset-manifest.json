@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/VM-tooling/static/css/main.9bba5166.css",
-    "main.js": "/VM-tooling/static/js/main.b169dd3c.js",
+    "main.js": "/VM-tooling/static/js/main.add00f03.js",
     "static/js/453.645c6e2c.chunk.js": "/VM-tooling/static/js/453.645c6e2c.chunk.js",
     "index.html": "/VM-tooling/index.html",
     "main.9bba5166.css.map": "/VM-tooling/static/css/main.9bba5166.css.map",
-    "main.b169dd3c.js.map": "/VM-tooling/static/js/main.b169dd3c.js.map",
+    "main.add00f03.js.map": "/VM-tooling/static/js/main.add00f03.js.map",
     "453.645c6e2c.chunk.js.map": "/VM-tooling/static/js/453.645c6e2c.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.9bba5166.css",
-    "static/js/main.b169dd3c.js"
+    "static/js/main.add00f03.js"
   ]
 }
