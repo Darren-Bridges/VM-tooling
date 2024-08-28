@@ -28,7 +28,7 @@ const SizeButton = ({ size, currentSize, onClick, children }) => (
 );
 
 const TemplateBuilder = ({ template, toggleBold, setAlignment, setSize, removeField }) => (
-  <div className="w-2/5 bg-white dark:bg-gray-800 p-4">
+  <div className="w-2/5 bg-gray-100 dark:bg-gray-800 p-4">
     <h2 className="text-lg font-bold mb-4 text-gray-800 dark:text-white">Template Builder</h2>
     <Droppable droppableId="template-builder" type="FIELD">
       {(provided) => (
