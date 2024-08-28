@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from './Sidebar';
 
 const Layout = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);  // Default to open
   const [darkMode, setDarkMode] = useState(true);
 
   useEffect(() => {
@@ -18,13 +18,15 @@ const Layout = ({ children }) => {
     document.documentElement.classList.toggle('dark', newDarkMode);
   };
 
+  const toggleSidebar = () => setSidebarOpen(prev => !prev);
+
   return (
-    <div className={`flex flex-col h-screen md:flex-row ${darkMode ? 'dark' : ''}`}>
+    <div className={`flex h-screen ${darkMode ? 'dark' : ''}`}>
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       <div className="flex-1 flex flex-col bg-gray-100 dark:bg-gray-900">
-        <header className="bg-white dark:bg-gray-800 shadow-sm p-4 md:hidden">
+        <header className="bg-white dark:bg-gray-800 shadow-sm p-4">
           <button
-            onClick={() => setSidebarOpen(true)}
+            onClick={toggleSidebar}
             className="text-gray-500 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
