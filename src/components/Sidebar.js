@@ -46,7 +46,17 @@ function Sidebar({ isOpen, onClose }) {
             <SidebarSubItem to="/translations/flatten" icon={ArrowsPointingInIcon} text="Flatten" onClick={onClose} />
             <SidebarSubItem to="/translations/unflatten" icon={ArrowsPointingOutIcon} text="Unflatten" onClick={onClose} />
           </SidebarItem>
-          <SidebarItem to="/customer-receipt-template-builder" icon={DocumentTextIcon} text="Customer Receipt Template" onClick={onClose} />
+          <SidebarItem 
+            to="/customer-receipt-template-builder" 
+            icon={DocumentTextIcon} 
+            text={
+              <span className="flex items-center">
+                Customer Receipt Template
+                <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold text-linear-blue-600 bg-linear-blue-100 rounded-full">Beta</span>
+              </span>
+            } 
+            onClick={onClose} 
+          />
         </ul>
       </nav>
     </>

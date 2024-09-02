@@ -13,6 +13,7 @@ const CustomerReceiptTemplateBuilder = () => {
   const [template, setTemplate] = useState([]);
   const [xmlInput, setXmlInput] = useState('');
   const dialogRef = useRef(null);
+  const [importError, setImportError] = useState('');
 
   const onDragEnd = (result) => {
     const { source, destination } = result;
@@ -98,38 +99,48 @@ const CustomerReceiptTemplateBuilder = () => {
   const closeImportDialog = () => {
     dialogRef.current.close();
     setXmlInput('');
+    setImportError('');
   };
 
   const importTemplate = () => {
     if (xmlInput.trim()) {
-      const importedFields = parseReceiptXML(xmlInput);
-      
-      // Create a lookup object for field data
-      const fieldDataLookup = availableFieldsData.flatMap(group => group.fields)
-        .reduce((acc, field) => {
-          acc[field.id] = field;
-          return acc;
-        }, {});
+      try {
+        const importedFields = parseReceiptXML(xmlInput);
+        
+        // Create a lookup object for field data
+        const fieldDataLookup = availableFieldsData.flatMap(group => group.fields)
+          .reduce((acc, field) => {
+            acc[field.id] = field;
+            return acc;
+          }, {});
 
-      // Map imported fields to template format, preserving order, alignment, bold, and size
-      const newTemplate = importedFields
-        .filter(field => fieldDataLookup[field.id]) // Only include fields we have data for
-        .map(field => ({
-          ...fieldDataLookup[field.id],
-          uniqueId: uuidv4(),
-          alignment: field.alignment,
-          isBold: field.bold,
-          size: field.size
-        }));
+        // Map imported fields to template format, preserving order, alignment, bold, and size
+        const newTemplate = importedFields
+          .filter(field => fieldDataLookup[field.id]) // Only include fields we have data for
+          .map(field => ({
+            ...fieldDataLookup[field.id],
+            uniqueId: uuidv4(),
+            alignment: field.alignment,
+            isBold: field.bold,
+            size: field.size
+          }));
 
-      setTemplate(newTemplate);
-      closeImportDialog();
+        setTemplate(newTemplate);
+        closeImportDialog();
+        setImportError('');
+      } catch (error) {
+        console.error('Error parsing XML:', error);
+        setImportError('Invalid XML format. Please check your input and try again.');
+      }
     }
   };
 
   return (
     <div className="p-4 bg-linear-gray-100 dark:bg-linear-gray-900">
-      <h1 className="text-2xl font-bold mb-2 text-linear-gray-800 dark:text-linear-gray-200">Customer Receipt Builder</h1>
+      <h1 className="text-2xl font-bold mb-2 text-linear-gray-800 dark:text-linear-gray-200 flex items-center">
+        Customer Receipt Builder
+        <span className="ml-2 px-2 py-1 text-xs font-semibold text-linear-blue-600 bg-linear-blue-100 rounded-full">Beta</span>
+      </h1>
       <p className="mb-4 text-sm text-linear-gray-600 dark:text-linear-gray-400">
         Drag and drop or click fields from the left panel to build your receipt template. The preview on the right will update as you add fields.
       </p>
@@ -157,7 +168,7 @@ const CustomerReceiptTemplateBuilder = () => {
 
       <dialog
         ref={dialogRef}
-        className="p-6 rounded-lg shadow-xl bg-white dark:bg-linear-gray-800 text-linear-gray-800 dark:text-linear-gray-200"
+        className="p-6 rounded-lg shadow-xl bg-white dark:bg-linear-gray-800 text-linear-gray-800 dark:text-linear-gray-200 w-full max-w-2xl"
       >
         <h2 className="text-xl font-bold mb-4">Import XML Template</h2>
         <textarea
@@ -166,6 +177,9 @@ const CustomerReceiptTemplateBuilder = () => {
           className="w-full h-64 p-2 border border-linear-gray-300 dark:border-linear-gray-600 rounded mb-4 bg-linear-gray-50 dark:bg-linear-gray-700 text-linear-gray-800 dark:text-linear-gray-200"
           placeholder="Paste your XML template here..."
         />
+        {importError && (
+          <p className="text-red-500 mb-4">{importError}</p>
+        )}
         <div className="flex justify-end space-x-2">
           <button
             onClick={closeImportDialog}
