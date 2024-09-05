@@ -138,7 +138,7 @@ const CustomerReceiptTemplateBuilder = () => {
   return (
     <div className="p-4 bg-linear-gray-100 dark:bg-linear-gray-900">
       <h1 className="text-2xl font-bold mb-2 text-linear-gray-800 dark:text-linear-gray-200 flex items-center">
-        Customer Receipt Builder
+        Receipt Builder
         <span className="ml-2 px-2 py-1 text-xs font-semibold text-linear-blue-600 bg-linear-blue-100 rounded-full">Beta</span>
       </h1>
       <p className="mb-4 text-sm text-linear-gray-600 dark:text-linear-gray-400">

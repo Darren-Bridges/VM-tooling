@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   HomeIcon, 
   DocumentTextIcon, 
   LanguageIcon, 
   ArrowsPointingInIcon, 
   ArrowsPointingOutIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  UserPlusIcon
 } from '@heroicons/react/24/outline';
 
-function Sidebar({ isOpen, onClose }) {
+function Sidebar({ isOpen, onClose, userEmail, onLogout }) {
   const [isTranslationsOpen, setIsTranslationsOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    onLogout();
+    navigate('/');
+  };
 
   return (
     <>
@@ -21,7 +28,7 @@ function Sidebar({ isOpen, onClose }) {
         ></div>
       )}
       <nav className={`
-        fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-linear-gray-800 border-r border-linear-gray-200 dark:border-linear-gray-700 transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-30 w-64 bg-white dark:bg-linear-gray-800 border-r border-linear-gray-200 dark:border-linear-gray-700 transform transition-transform duration-300 ease-in-out flex flex-col
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
       `}>
         <div className="flex justify-between items-center p-4 border-b border-linear-gray-200 dark:border-linear-gray-700">
@@ -35,7 +42,7 @@ function Sidebar({ isOpen, onClose }) {
             </svg>
           </button>
         </div>
-        <ul className="py-4">
+        <ul className="py-4 flex-grow">
           <SidebarItem to="/" icon={HomeIcon} text="Home" onClick={onClose} />
           <SidebarItem
             icon={LanguageIcon}
@@ -51,13 +58,33 @@ function Sidebar({ isOpen, onClose }) {
             icon={DocumentTextIcon} 
             text={
               <span className="flex items-center">
-                Customer Receipt Template
+                Receipt builder
+                <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold text-linear-blue-600 bg-linear-blue-100 rounded-full">Beta</span>
+              </span>
+            } 
+            onClick={onClose} 
+          />
+          <SidebarItem 
+            to="/new-tenant-creation-wizard" 
+            icon={UserPlusIcon} 
+            text={
+              <span className="flex items-center">
+                NTCW
                 <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold text-linear-blue-600 bg-linear-blue-100 rounded-full">Beta</span>
               </span>
             } 
             onClick={onClose} 
           />
         </ul>
+        <div className="p-4 border-t border-linear-gray-200 dark:border-linear-gray-700">
+          <p className="text-sm text-linear-gray-600 dark:text-linear-gray-400 mb-2">{userEmail}</p>
+          <button
+            onClick={handleLogout}
+            className="w-full px-4 py-2 bg-linear-blue-500 text-white rounded hover:bg-linear-blue-600 transition-colors"
+          >
+            Logout
+          </button>
+        </div>
       </nav>
     </>
   );
