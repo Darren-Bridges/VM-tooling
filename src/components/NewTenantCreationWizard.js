@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { toast } from 'react-toastify';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/solid';
+import { EyeIcon, EyeSlashIcon, ChevronDownIcon, ChevronUpIcon, CheckCircleIcon, ExclamationCircleIcon, XCircleIcon } from '@heroicons/react/24/solid';
+import TenantSettingConfig from '../utils/TenantSettingConfig';
+import StoreSettingConfig from '../utils/StoreSettingConfig';
+import ConfigVariables from '../utils/ConfigVariables';
+import './Spinner.css';
+
 
 const InputField = ({ label, name, type = 'text', value, onChange, placeholder, suffix, error }) => (
   <div className="relative">
@@ -43,6 +48,35 @@ const ToggleSwitch = ({ label, name, checked, onChange }) => (
   </label>
 );
 
+// Add this constant at the top of your file, outside of the component
+const CHANNEL_UUIDS = {
+  pos: "db1e8350-dc27-4ab5-8871-bd1631a63469",
+  kiosk: "fe2d668c-6c8d-4321-adf0-36e0cddbbee5",
+  delivery: "c3646733-4fd2-4dfa-9b03-8c0d3f2d2d0f",
+  opat: "05a01e44-a8ec-47dc-ba6f-0e1f76b41079",
+  online: "0d866cac-8597-4c22-95f1-82e1d27be211",
+  uberEats: "b6b997a7-e482-11eb-9486-0676c9cc7839",
+  deliveroo: "b6ba3489-e482-11eb-9486-0676c9cc7839",
+  justEat: "b6ba366e-e482-11eb-9486-0676c9cc7839"
+};
+
+const defaultFeatureFlags = [
+    {"name":"epos","uuid":"3b77ab51-f1a8-4e27-ad2d-85434e88e80d"},
+    {"name":"nutrition","uuid":"9777c1ef-489f-4bf1-9cc6-42983de05451"},
+    {"name":"mealv2","uuid":"f04fba66-e385-11e9-86b7-0a2dad7ab1ae"},
+    {"name":"store_management","uuid":"89695183-7f1f-4c5e-aba6-59e638f28509"},
+    {"name":"paperless-kds","uuid":"b4142ff3-eb16-4e1b-892e-36c1e7ea5c04"},
+    {"name":"redash_reports","uuid":"e4142ff3-eb16-4e1b-892e-36c1e7ea5c04"},
+    {"name":"email.templates.v2","uuid":"1822c313-3a98-4525-a10f-169402f23140"},
+    {"name":"new_kds_display_logic","uuid":"0362056a-c8f0-4f4e-ad36-88f0f8e10207"},
+    {"name":"discount","uuid":"7985e3fb-22ab-4d47-a71e-87600d1c3587"},
+    {"name":"metabase","uuid":"300ed357-392a-11eb-903b-0676c9cc7839"},
+    {"name":"promo_banner","uuid":"f39c95a8-df11-4a27-a88f-df23a25ed692"},
+    {"name":"vatCalculationV2","uuid":"a785b9a7-5345-4ace-a56b-aeb76f8812f4"},
+    {"name":"printV2","uuid":"c018a5c8-629c-41bf-9efb-01a0abfba3c8"},
+    {"name":"itemRefund","uuid":"b4be75cc-24fb-4c49-89e1-86f25bfb5ea9"}
+  ];
+
 const NewTenantCreationWizard = () => {
   const [formData, setFormData] = useState({
     tenantName: '',
@@ -60,10 +94,10 @@ const NewTenantCreationWizard = () => {
     longitude: '',
     storeEmail: '',
     opat: false,
-    cnc: false,
+    online: false,
     kiosk: false,
     delivery: false,
-    epos: false,
+    pos: false,
     deliveroo: false,
     uberEats: false,
     justEat: false,
@@ -75,9 +109,27 @@ const NewTenantCreationWizard = () => {
   const [errors, setErrors] = useState({});
   const [apiResponses, setApiResponses] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [completedSteps, setCompletedSteps] = useState(0);
+
+  const updateProgress = () => {
+    setCompletedSteps(prev => prev + 1);
+    const newProgress = Math.min(Math.round((completedSteps + 1) / totalSteps * 100), 100);
+    setProgress(newProgress);
+  };
 
   // Add this line to get the selected environment
   const selectedEnvironment = localStorage.getItem('selected-environment') || 'feature-branch';
+
+  // Define baseUrl based on the selected environment
+  const baseUrls = {
+    'feature-branch': 'https://pos2-next.vmos-qa.com/',
+    'demo': 'https://vmos2.vmos-demo.com/',
+    'live': 'https://vmos2.vmos.io/'
+  };
+  const baseUrl = baseUrls[selectedEnvironment] || baseUrls['feature-branch'];
 
   // Function to get a friendly name for the environment
   const getEnvironmentName = (env) => {
@@ -93,12 +145,82 @@ const NewTenantCreationWizard = () => {
     }
   };
 
+  const countryCodes = {
+    "UK": "44",
+    "Germany": "49",
+    "Belgium": "32",
+    "France": "33",
+    "Ireland": "353"
+  };
+
+  const timeZones = {
+    "UK": "Europe/London",
+    "Germany": "Europe/Berlin",
+    "Belgium": "Europe/Brussels",
+    "France": "Europe/Paris",
+    "Ireland": "Europe/Dublin"
+  };
+
+  const generateRandomPassword = () => {
+    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
+    let password = "";
+    for (let i = 0; i < 12; i++) {
+      password += charset.charAt(Math.floor(Math.random() * charset.length));
+    }
+    return password;
+  };
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prevState => ({
-      ...prevState,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    setFormData(prevState => {
+      const newState = {
+        ...prevState,
+        [name]: type === 'checkbox' ? checked : value
+      };
+
+      // If tenantName is being changed, update related fields
+      if (name === 'tenantName') {
+        const sanitizedValue = value.toLowerCase().replace(/[^a-z0-9]/g, '');
+        newState.tenantAlias = sanitizedValue;
+        newState.hostName = sanitizedValue;
+        newState.tenantDescription = value;
+        
+        // Set admin details when tenantName has a value
+        if (value) {
+          newState.adminFirstName = 'Admin';
+          newState.adminLastName = value;
+          newState.adminEmail = `admin@${sanitizedValue}.dev`;
+          newState.adminPassword = generateRandomPassword();
+        }
+      }
+
+      // If storeName is being changed, update storeEmail
+      if (name === 'storeName') {
+        const sanitizedStoreName = value.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (sanitizedStoreName) {
+          newState.storeEmail = `${sanitizedStoreName}@vitamojo.com`;
+        }
+      }
+
+      // If country changes, update the currency
+      if (name === 'country') {
+        switch (value) {
+          case 'UK':
+            newState.currency = 'GBP';
+            break;
+          case 'Ireland':
+          case 'Germany':
+          case 'Belgium':
+          case 'France':
+            newState.currency = 'EUR';
+            break;
+          default:
+            newState.currency = '';
+        }
+      }
+
+      return newState;
+    });
     // Clear the error for this field when it's changed
     setErrors(prevErrors => ({ ...prevErrors, [name]: '' }));
   };
@@ -138,18 +260,263 @@ const NewTenantCreationWizard = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const makeAuthenticatedRequest = async (url, options) => {
+    let accessToken = localStorage.getItem('access-token');
+    
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...options.headers,
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (response.status === 401) {
+        // Token might be expired, try to refresh
+        const refreshToken = localStorage.getItem('refresh-token');
+        const selectedEnvironment = localStorage.getItem('selected-environment');
+        const baseUrls = {
+          'feature-branch': 'https://pos2-next.vmos-qa.com/',
+          'demo': 'https://vmos2.vmos-demo.com/',
+          'live': 'https://vmos2.vmos.io/'
+        };
+        const baseUrl = baseUrls[selectedEnvironment] || baseUrls['feature-branch'];
+        
+        const refreshResponse = await fetch(`${baseUrl}user/v1/auth/refresh/${refreshToken}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (refreshResponse.ok) {
+          const refreshData = await refreshResponse.json();
+          const newAccessToken = refreshData.payload.token.value;
+          
+          if (!newAccessToken) {
+            console.error('New access token is undefined');
+            throw new Error('Failed to obtain new access token');
+          }
+          
+          localStorage.setItem('access-token', newAccessToken);
+          console.log('New access token stored:', newAccessToken);
+
+          // Retry the request with the new token
+          return fetch(url, {
+            ...options,
+            headers: {
+              ...options.headers,
+              'Authorization': `Bearer ${newAccessToken}`,
+            },
+          });
+        } else {
+          console.error('Failed to refresh token:', await refreshResponse.text());
+          throw new Error('Unable to refresh token');
+        }
+      }
+
+      return response;
+    } catch (error) {
+      console.error('Request failed:', error);
+      throw error;
+    }
+  };
+
+  const createMenus = async (tenantUuid) => {
+    const channelMenuMap = {
+      "pos": "Master",
+      "kiosk": "Master",
+      "delivery": "Master",
+      "opat": "Master",
+      "online": "Master",
+      "uberEats": "Master",
+      "deliveroo": "Master",
+      "justEat": "Master"
+    };
+
+    const selectedChannels = Object.entries(formData)
+      .filter(([key, value]) => ['opat', 'online', 'kiosk', 'delivery', 'pos', 'deliveroo', 'uberEats', 'justEat'].includes(key) && value)
+      .map(([key]) => key === 'pos' ? 'pos' : key === 'online' ? 'online' : key);
+
+    const menus = [...new Set(selectedChannels.map(channel => channelMenuMap[channel]))];
+    const menuUUIDs = {};
+
+    for (const menuName of menus) {
+      const menuSlug = menuName.toLowerCase();
+      const posMenu = menuName === "POS" ? "pos" : "general";
+
+      try {
+        const createMenuResponse = await makeAuthenticatedRequest(`${baseUrl}catalog/management/menus`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'tenant': tenantUuid
+          },
+          body: JSON.stringify({
+            name: `${menuName} menu`,
+            description: `${menuName} menu description`,
+            displayName: `${menuName} menu`,
+            translations: [],
+            extTenantUUID: tenantUuid,
+            slug: menuSlug,
+            menuFormat: posMenu
+          }),
+        });
+
+        const createMenuData = await createMenuResponse.json();
+        
+        // Add the response to apiResponses
+        setApiResponses(prevResponses => [...prevResponses, {
+          name: `Create ${menuName} Menu`,
+          status: createMenuResponse.status,
+          data: createMenuData
+        }]);
+
+        if (createMenuResponse.ok) {
+          menuUUIDs[menuName] = createMenuData.payload.uuid;
+          console.log(`${menuName} menu created`);
+        } else {
+          console.error(`Failed to create ${menuName} menu:`, createMenuData);
+        }
+      } catch (error) {
+        console.error(`Error creating ${menuName} menu:`, error);
+        
+        // Add error response to apiResponses
+        setApiResponses(prevResponses => [...prevResponses, {
+          name: `Create ${menuName} Menu`,
+          status: 'Error',
+          data: error.message
+        }]);
+      }
+      
+      updateProgress();
+    }
+
+    return menuUUIDs;
+  };
+
+  const createMenuHours = async (tenantUuid, storeUuid, menuUUIDs) => {
+    const selectedChannels = Object.entries(formData)
+      .filter(([key, value]) => ['opat', 'online', 'kiosk', 'delivery', 'pos', 'deliveroo', 'uberEats', 'justEat'].includes(key) && value)
+      .map(([key]) => {
+        if (key === 'online') return 'online';
+        if (key === 'pos') return 'pos';
+        return key;
+      });
+
+    let menuHoursPayload = [];
+    for (const channel of selectedChannels) {
+      const menuName = ConfigVariables.channelMenuMap[channel];
+      const menuUUID = menuUUIDs[menuName];
+      for (let i = 1; i <= 5; i++) {
+        menuHoursPayload.push({
+          channel: channel,
+          from: "11:00",
+          menuUUID: menuUUID,
+          to: "22:00",
+          weekdayId: i,
+        });
+      }
+    }
+
+    try {
+      const createMenuHoursResponse = await makeAuthenticatedRequest(`${baseUrl}catalog/management/menuHours/store/${storeUuid}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'tenant': tenantUuid
+        },
+        body: JSON.stringify(menuHoursPayload),
+      });
+
+      const createMenuHoursData = await createMenuHoursResponse.json();
+      return { name: 'Menu Hours Creation', status: createMenuHoursResponse.status, data: createMenuHoursData };
+    } catch (createMenuHoursError) {
+      return { name: 'Menu Hours Creation', status: 'Error', data: createMenuHoursError.message };
+    }
+  };
+
+  const getTenantSettings = async () => {
+    let tenantSettings = await TenantSettingConfig.tenantSettings(formData);
+    
+    const countryCodes = {
+      "UK": "44",
+      "Germany": "49",
+      "Belgium": "32",
+      "France": "33",
+      "Ireland": "353"
+    };
+
+    const timeZones = {
+      "UK": "Europe/London",
+      "Germany": "Europe/Berlin",
+      "Belgium": "Europe/Brussels",
+      "France": "Europe/Paris",
+      "Ireland": "Europe/Dublin"
+    };
+
+    // Function to add or update a setting
+    const addOrUpdateSetting = (name, value, uuid) => {
+      const existingIndex = tenantSettings.findIndex(setting => setting.name === name);
+      if (existingIndex !== -1) {
+        tenantSettings[existingIndex].value = value;
+      } else {
+        tenantSettings.push({ name, value, uuid });
+      }
+    };
+
+    // Add or update phone prefix setting
+    const phonePrefix = countryCodes[formData.country] || '';
+    addOrUpdateSetting("phone.prefix", phonePrefix, "84f9f736-0943-4c91-9169-abc51b24ae97");
+
+    // Add or update timezone setting
+    const timezone = timeZones[formData.country] || '';
+    addOrUpdateSetting("timezone", timezone, "a652fbea-259f-42f9-aacb-6c1a2d790b9c");
+
+    // Add or update currency setting
+    const currencyValue = JSON.stringify({
+      code: formData.currency,
+      sign: formData.currency === 'GBP' ? '£' : '€'
+    });
+    addOrUpdateSetting("currency", currencyValue, "4422e7a4-c3b1-47b8-b52a-a99fa94cecea");
+
+    if (formData.kiosk) {
+      const kioskSettings = await TenantSettingConfig.kioskTenantSettings();
+      kioskSettings.forEach(setting => {
+        addOrUpdateSetting(setting.name, setting.value, setting.uuid);
+      });
+    }
+    
+    if (formData.opat) {
+      const opatSettings = await TenantSettingConfig.opatTenantSettings();
+      opatSettings.forEach(setting => {
+        addOrUpdateSetting(setting.name, setting.value, setting.uuid);
+      });
+    }
+
+    return tenantSettings;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
+      setIsSubmitting(true);
+      setProgress(0);
+      setCompletedSteps(0);
+
+      // Calculate total steps
+      let steps = 7; // Base steps (tenant, host, diet clone, admin user, store, menus, menu hours)
+      steps += Object.values(formData).filter(value => typeof value === 'boolean' && value).length; // Channels
+      steps += defaultFeatureFlags.length; // Feature flags
+      const tenantSettings = await getTenantSettings();
+      steps += tenantSettings.length; // Tenant settings
+      const storeSettings = await getStoreSettings();
+      steps += storeSettings.length; // Store settings
+      setTotalSteps(steps);
+
       const { tenantName, tenantAlias, tenantDescription, hostName, adminFirstName, adminLastName, adminEmail, adminPassword, storeName, storeSlug, storeAddress, latitude, longitude, storeEmail } = formData;
       
-      const accessToken = localStorage.getItem('access-token');
-      
-      if (!accessToken) {
-        console.error('No access token found. User might not be authenticated.');
-        return;
-      }
-
       const selectedEnvironment = localStorage.getItem('selected-environment');
       const baseUrls = {
         'feature-branch': 'https://pos2-next.vmos-qa.com/',
@@ -160,13 +527,13 @@ const NewTenantCreationWizard = () => {
       const baseUrl = baseUrls[selectedEnvironment] || baseUrls['feature-branch'];
 
       const responses = [];
+      let storeUuid; // Declare storeUuid at the beginning of handleSubmit
 
       try {
         // First request: Create tenant
-        const tenantResponse = await fetch(`${baseUrl}tenant/v1/tenants`, {
+        const tenantResponse = await makeAuthenticatedRequest(`${baseUrl}tenant/v1/tenants`, {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -178,6 +545,7 @@ const NewTenantCreationWizard = () => {
 
         const tenantData = await tenantResponse.json();
         responses.push({ name: 'Tenant Creation', status: tenantResponse.status, data: tenantData });
+        updateProgress();
 
         if (tenantResponse.status === 201) {
           console.log('Tenant created successfully');
@@ -186,10 +554,9 @@ const NewTenantCreationWizard = () => {
 
           // Second request: Create tenant host
           try {
-            const hostResponse = await fetch(`${baseUrl}tenant/v1/tenantHosts/many`, {
+            const hostResponse = await makeAuthenticatedRequest(`${baseUrl}tenant/v1/tenantHosts/many`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
                 'tenant': tenantUuid
               },
@@ -202,10 +569,10 @@ const NewTenantCreationWizard = () => {
 
             const hostData = await hostResponse.json();
             responses.push({ name: 'Host Creation', status: hostResponse.status, data: hostData });
+            updateProgress();
 
             if (!hostResponse.ok) {
               console.error('Failed to create tenant host:', hostData);
-              // setErrorMessage('Tenant created, but failed to create host. Please try again.');
             }
           } catch (hostError) {
             responses.push({ name: 'Host Creation', status: 'Error', data: hostError.message });
@@ -213,10 +580,9 @@ const NewTenantCreationWizard = () => {
 
           // Third request: Clone diets
           try {
-            const dietCloneResponse = await fetch(`${baseUrl}catalog/management/diets/clone`, {
+            const dietCloneResponse = await makeAuthenticatedRequest(`${baseUrl}catalog/management/diets/clone`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
                 'tenant': tenantUuid
               },
@@ -228,10 +594,10 @@ const NewTenantCreationWizard = () => {
 
             const dietCloneData = await dietCloneResponse.json();
             responses.push({ name: 'Diet Clone', status: dietCloneResponse.status, data: dietCloneData });
+            updateProgress();
 
             if (!dietCloneResponse.ok) {
               console.error('Failed to clone diets:', dietCloneData);
-              // setErrorMessage('Tenant created, but failed to clone diets. Please try again.');
             }
           } catch (dietCloneError) {
             responses.push({ name: 'Diet Clone', status: 'Error', data: dietCloneError.message });
@@ -239,10 +605,9 @@ const NewTenantCreationWizard = () => {
 
           // Fourth request: Create admin user
           try {
-            const createUserResponse = await fetch(`${baseUrl}user/v1/management/user`, {
+            const createUserResponse = await makeAuthenticatedRequest(`${baseUrl}user/v1/management/user`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
                 'tenant': tenantUuid
               },
@@ -266,10 +631,10 @@ const NewTenantCreationWizard = () => {
 
             const createUserData = await createUserResponse.json();
             responses.push({ name: 'Admin User Creation', status: createUserResponse.status, data: createUserData });
+            updateProgress();
 
             if (!createUserResponse.ok) {
               console.error('Failed to create admin user:', createUserData);
-              // setErrorMessage('Tenant created, but failed to create admin user. Please try again.');
             }
           } catch (createUserError) {
             responses.push({ name: 'Admin User Creation', status: 'Error', data: createUserError.message });
@@ -277,10 +642,9 @@ const NewTenantCreationWizard = () => {
 
           // Fifth request: Create store
           try {
-            const createStoreResponse = await fetch(`${baseUrl}tenant/v1/stores`, {
+            const createStoreResponse = await makeAuthenticatedRequest(`${baseUrl}tenant/v1/stores`, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
                 'tenant': tenantUuid
               },
@@ -303,13 +667,174 @@ const NewTenantCreationWizard = () => {
 
             const createStoreData = await createStoreResponse.json();
             responses.push({ name: 'Store Creation', status: createStoreResponse.status, data: createStoreData });
+            updateProgress();
 
-            if (!createStoreResponse.ok) {
+            if (createStoreResponse.ok) {
+              storeUuid = createStoreData.payload.uuid; // Assign storeUuid here
+              console.log('Store created successfully, UUID:', storeUuid);
+
+              // Create menus
+              const menuUUIDs = await createMenus(tenantUuid);
+              responses.push({ name: 'Menu Creation', status: 'Success', data: menuUUIDs });
+              updateProgress();
+
+              // Create menu hours
+              const menuHoursResponse = await createMenuHours(tenantUuid, storeUuid, menuUUIDs);
+              responses.push(menuHoursResponse);
+              updateProgress();
+
+              if (menuHoursResponse.status === 200) {
+                console.log('Menu hours created successfully');
+              } else {
+                console.error('Failed to create menu hours:', menuHoursResponse.data);
+              }
+            } else {
               console.error('Failed to create store:', createStoreData);
-              // setErrorMessage('Tenant created, but failed to create store. Please try again.');
             }
           } catch (createStoreError) {
             responses.push({ name: 'Store Creation', status: 'Error', data: createStoreError.message });
+          }
+
+          // New request: Create Feature Flags
+          for (const featureFlag of defaultFeatureFlags) {
+            // Skip EPOS feature flag if not selected
+            if (featureFlag.name === 'epos' && !formData.pos) {
+              continue;
+            }
+
+            try {
+              const createFeatureFlagResponse = await makeAuthenticatedRequest(`${baseUrl}tenant/v1/tenant-feature`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'tenant': tenantUuid
+                },
+                body: JSON.stringify({
+                  status: true,
+                  feature: { uuid: featureFlag.uuid },
+                  tenant: { uuid: tenantUuid }
+                }),
+              });
+
+              const createFeatureFlagData = await createFeatureFlagResponse.json();
+              responses.push({ name: `Feature Flag Creation (${featureFlag.name})`, status: createFeatureFlagResponse.status, data: createFeatureFlagData });
+              updateProgress();
+
+              if (!createFeatureFlagResponse.ok) {
+                console.error(`Failed to create feature flag ${featureFlag.name}:`, createFeatureFlagData);
+              }
+            } catch (createFeatureFlagError) {
+              responses.push({ name: `Feature Flag Creation (${featureFlag.name})`, status: 'Error', data: createFeatureFlagError.message });
+            }
+          }
+
+          // New request: Create Channels
+          try {
+            const selectedChannels = Object.entries(formData)
+              .filter(([key, value]) => ['opat', 'online', 'kiosk', 'delivery', 'pos', 'deliveroo', 'uberEats', 'justEat'].includes(key) && value)
+              .map(([key]) => {
+                if (key === 'online') return 'online';
+                if (key === 'pos') return 'pos';
+                return key;
+              });
+
+            const channelUUIDs = selectedChannels.map(channel => CHANNEL_UUIDS[channel]);
+
+            const createChannelsResponse = await makeAuthenticatedRequest(`${baseUrl}tenant/v1/tenant-channels/${tenantUuid}`, {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                'tenant': tenantUuid
+              },
+              body: JSON.stringify({
+                channels: channelUUIDs
+              }),
+            });
+
+            const createChannelsData = await createChannelsResponse.json();
+            responses.push({ name: 'Channel Creation', status: createChannelsResponse.status, data: createChannelsData });
+            updateProgress();
+
+            if (createChannelsResponse.ok) {
+              console.log('Channels added successfully');
+            } else {
+              console.error('Failed to create channels:', createChannelsData);
+            }
+          } catch (createChannelsError) {
+            responses.push({ name: 'Channel Creation', status: 'Error', data: createChannelsError.message });
+            console.error('Error creating channels:', createChannelsError);
+          }
+
+          // New request: Create Tenant Settings
+          try {
+            const tenantSettings = await getTenantSettings();
+            
+            for (const setting of tenantSettings) {
+              const payload = {
+                tenant: { uuid: tenantUuid },
+                setting: { uuid: setting.uuid },
+                value: setting.value
+              };
+
+              const createSettingResponse = await makeAuthenticatedRequest(`${baseUrl}tenant/v1/tenants/settings`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'tenant': tenantUuid
+                },
+                body: JSON.stringify(payload),
+              });
+
+              const createSettingData = await createSettingResponse.json();
+              responses.push({ name: `Tenant Setting Creation (${setting.name})`, status: createSettingResponse.status, data: createSettingData });
+              updateProgress();
+
+              if (!createSettingResponse.ok) {
+                console.error(`Failed to create tenant setting ${setting.name}:`, createSettingData);
+              }
+            }
+          } catch (createSettingsError) {
+            responses.push({ name: 'Tenant Settings Creation', status: 'Error', data: createSettingsError.message });
+            console.error('Error creating tenant settings:', createSettingsError);
+          }
+
+          // New request: Create Store Settings
+          if (storeUuid) { // Only proceed if storeUuid is defined
+            try {
+              const storeSettings = await getStoreSettings();
+              
+              for (const setting of storeSettings) {
+                const payload = {
+                  tenant: { uuid: tenantUuid },
+                  store: { uuid: storeUuid },
+                  setting: { uuid: setting.uuid },
+                  value: setting.value
+                };
+
+                const createStoreSettingResponse = await makeAuthenticatedRequest(`${baseUrl}tenant/v1/stores/settings`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'tenant': tenantUuid
+                  },
+                  body: JSON.stringify(payload),
+                });
+
+                const createStoreSettingData = await createStoreSettingResponse.json();
+                responses.push({ name: `Store Setting Creation (${setting.name})`, status: createStoreSettingResponse.status, data: createStoreSettingData });
+                updateProgress();
+
+                if (!createStoreSettingResponse.ok) {
+                  console.error(`Failed to create store setting ${setting.name}:`, createStoreSettingData);
+                }
+              }
+            } catch (createStoreSettingsError) {
+              responses.push({ name: 'Store Settings Creation', status: 'Error', data: createStoreSettingsError.message });
+              console.error('Error creating store settings:', createStoreSettingsError);
+            }
+          } else {
+            console.error('Store UUID is not available. Skipping store settings creation.');
+            responses.push({ name: 'Store Settings Creation', status: 'Skipped', data: 'Store UUID not available' });
           }
 
           // If we reach here, tenant was created successfully
@@ -318,10 +843,12 @@ const NewTenantCreationWizard = () => {
           
         } else {
           console.error('Failed to create tenant:', tenantData);
-          // setErrorMessage('Failed to create tenant. Please try again.');
         }
       } catch (error) {
         responses.push({ name: 'Overall Process', status: 'Error', data: error.message });
+      } finally {
+        setIsSubmitting(false);
+        setProgress(100);
       }
 
       setApiResponses(responses);
@@ -360,10 +887,10 @@ const NewTenantCreationWizard = () => {
       longitude: '',
       storeEmail: '',
       opat: false,
-      cnc: false,
+      online: false,
       kiosk: false,
       delivery: false,
-      epos: false,
+      pos: false,
       deliveroo: false,
       uberEats: false,
       justEat: false,
@@ -377,52 +904,160 @@ const NewTenantCreationWizard = () => {
   const fillSampleData = () => {
     setFormData({
       tenantName: 'Sample Tenant',
-      tenantAlias: 'sample-tenant',
-      hostName: 'sample-tenant',
+      tenantAlias: 'sampletenant',
+      hostName: 'sampletenant',
       tenantDescription: 'This is a sample tenant description',
       adminFirstName: 'John',
       adminLastName: 'Doe',
       adminEmail: 'john.doe@example.com',
       adminPassword: 'SamplePassword123!',
       storeName: 'Sample Store',
-      storeSlug: 'sample-store',
+      storeSlug: 'samplestore',
       storeAddress: '123 Sample St, Sample City, 12345',
       latitude: '40.7128',
       longitude: '-74.0060',
       storeEmail: 'store@example.com',
       opat: true,
-      cnc: true,
-      kiosk: false,
+      online: true,
+      kiosk: true,
       delivery: true,
-      epos: true,
-      deliveroo: false,
+      pos: true,
+      deliveroo: true,
       uberEats: true,
-      justEat: false,
-      country: 'United States',
-      currency: 'USD',
+      justEat: true,
+      country: 'UK',
+      currency: 'GBP',
       feedbackEmail: 'feedback@example.com'
     });
     setErrors({});
-  };
-
-  const generateRandomPassword = () => {
-    const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
-    let password = "";
-    for (let i = 0; i < 12; i++) {
-      password += charset.charAt(Math.floor(Math.random() * charset.length));
-    }
-    setFormData(prevState => ({
-      ...prevState,
-      adminPassword: password
-    }));
   };
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
+  const getStoreSettings = async () => {
+    let storeSettings = await StoreSettingConfig.storeSettings();
+    
+    if (formData.online) {
+      const ccSettings = await StoreSettingConfig.ccStoreSettings();
+      storeSettings = storeSettings.concat(ccSettings);
+    }
+    
+    if (formData.opat) {
+      const opatSettings = await StoreSettingConfig.opatStoreSettings();
+      storeSettings = storeSettings.concat(opatSettings);
+    }
+    
+    if (formData.delivery) {
+      const deliverySettings = await StoreSettingConfig.deliveryStoreSettings();
+      storeSettings = storeSettings.concat(deliverySettings);
+    }
+    
+    if (formData.pos) {
+      if (typeof StoreSettingConfig.eposStoreSettings === 'function') {
+        const posSettings = await StoreSettingConfig.eposStoreSettings();
+        storeSettings = storeSettings.concat(posSettings);
+      } else {
+        console.error('eposStoreSettings is not a function');
+        // Optionally, you can add a custom error to the API responses here
+      }
+    }
+    
+    if (formData.kiosk) {
+      const kioskSettings = await StoreSettingConfig.kioskStoreSettings();
+      storeSettings = storeSettings.concat(kioskSettings);
+    }
+
+    return storeSettings;
+  };
+
+  const ApiResponseAccordion = ({ responses }) => {
+    const [openSection, setOpenSection] = useState(null);
+
+    const groupedResponses = {
+      'Tenant Creation': responses.filter(r => r.name === 'Tenant Creation'),
+      'Host Creation': responses.filter(r => r.name === 'Host Creation'),
+      'Admin User Creation': responses.filter(r => r.name === 'Admin User Creation'),
+      'Store Creation': responses.filter(r => r.name === 'Store Creation'),
+      'Menu Creation': responses.filter(r => r.name.includes('Create') && r.name.includes('Menu')),
+      'Menu Hours Creation': responses.filter(r => r.name === 'Menu Hours Creation'),
+      'Feature Flags': responses.filter(r => r.name.includes('Feature Flag Creation')),
+      'Channel Creation': responses.filter(r => r.name === 'Channel Creation'),
+      'Tenant Settings': responses.filter(r => r.name.includes('Tenant Setting Creation')),
+      'Store Settings': responses.filter(r => r.name.includes('Store Setting Creation')),
+    };
+
+    const getStatusIcon = (responses) => {
+      const allSuccess = responses.every(r => r.status >= 200 && r.status < 300);
+      const allFailed = responses.every(r => r.status >= 400 || r.status === 'Error');
+      
+      if (allSuccess) return <CheckCircleIcon className="w-5 h-5 text-green-500" />;
+      if (allFailed) return <XCircleIcon className="w-5 h-5 text-red-500" />;
+      return <ExclamationCircleIcon className="w-5 h-5 text-orange-500" />;
+    };
+
+    return (
+      <div className="space-y-2">
+        {Object.entries(groupedResponses).map(([section, sectionResponses]) => (
+          sectionResponses.length > 0 && (
+            <div key={section} className="border rounded-md overflow-hidden">
+              <button
+                className="w-full px-4 py-2 bg-gray-100 dark:bg-gray-700 flex justify-between items-center"
+                onClick={() => setOpenSection(openSection === section ? null : section)}
+              >
+                <span className="font-semibold text-gray-800 dark:text-white flex items-center">
+                  {getStatusIcon(sectionResponses)}
+                  <span className="ml-2">{section}</span>
+                </span>
+                {openSection === section ? (
+                  <ChevronUpIcon className="w-5 h-5 text-gray-500" />
+                ) : (
+                  <ChevronDownIcon className="w-5 h-5 text-gray-500" />
+                )}
+              </button>
+              {openSection === section && (
+                <div className="p-4 bg-white dark:bg-gray-800">
+                  {sectionResponses.map((response, index) => (
+                    <div key={index} className="mb-4 last:mb-0">
+                      <h4 className="font-semibold text-gray-800 dark:text-white">{response.name}</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300">
+                        Status: {typeof response.status === 'number' ? response.status : (response.status === 'Error' ? 'Error' : 'Unknown')}
+                      </p>
+                      <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-700 p-2 rounded overflow-x-auto">
+                        <code className="whitespace-pre-wrap">
+                          {typeof response.data === 'object' 
+                            ? JSON.stringify(response.data, null, 2) 
+                            : response.data}
+                        </code>
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="bg-white dark:bg-gray-800 min-h-[90vh] flex flex-col p-4 md:p-6">
+      {isSubmitting && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg text-center">
+            <div className="spinner mx-auto mb-4"></div>
+            <p className="mt-4 text-lg font-semibold text-gray-800 dark:text-white">
+              Creating tenant...
+            </p>
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              Please do not refresh or close this window.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl md:text-3xl font-bold text-gray-800 dark:text-white flex items-center">
           New Tenant Creation Wizard
@@ -444,6 +1079,44 @@ const NewTenantCreationWizard = () => {
             <InputField label="Tenant alias" name="tenantAlias" value={formData.tenantAlias} onChange={handleChange} placeholder="Enter tenant alias" error={errors.tenantAlias} />
             <InputField label="Host name" name="hostName" value={formData.hostName} onChange={handleChange} placeholder="Enter host name" suffix=".vmos.io" error={errors.hostName} />
             <InputField label="Tenant description" name="tenantDescription" value={formData.tenantDescription} onChange={handleChange} placeholder="Enter tenant description" error={errors.tenantDescription} />
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Tenant settings</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+              <label htmlFor="country" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Country</label>
+              <select
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                className={`input flex-grow ${errors.country ? 'border-red-500' : ''}`}
+              >
+                <option value="">Select a country</option>
+                <option value="UK">UK</option>
+                <option value="Germany">Germany</option>
+                <option value="Belgium">Belgium</option>
+                <option value="France">France</option>
+                <option value="Ireland">Ireland</option>
+              </select>
+              {errors.country && <p className="text-red-500 text-sm mt-1">{errors.country}</p>}
+            </div>
+            <div>
+              <label htmlFor="currency" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Currency</label>
+              <select
+                name="currency"
+                value={formData.currency}
+                onChange={handleChange}
+                className={`input flex-grow ${errors.currency ? 'border-red-500' : ''}`}
+              >
+                <option value="">Select a currency</option>
+                <option value="GBP">GBP</option>
+                <option value="EUR">EUR</option>
+              </select>
+              {errors.currency && <p className="text-red-500 text-sm mt-1">{errors.currency}</p>}
+            </div>
+            <InputField label="Feedback email" name="feedbackEmail" type="email" value={formData.feedbackEmail} onChange={handleChange} placeholder="Enter feedback email" error={errors.feedbackEmail} />
           </div>
         </section>
 
@@ -503,22 +1176,13 @@ const NewTenantCreationWizard = () => {
           <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Channels</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <ToggleSwitch label="OPAT" name="opat" checked={formData.opat} onChange={handleChange} />
-            <ToggleSwitch label="C+C" name="cnc" checked={formData.cnc} onChange={handleChange} />
+            <ToggleSwitch label="Online" name="online" checked={formData.online} onChange={handleChange} />
             <ToggleSwitch label="Kiosk" name="kiosk" checked={formData.kiosk} onChange={handleChange} />
             <ToggleSwitch label="Delivery" name="delivery" checked={formData.delivery} onChange={handleChange} />
-            <ToggleSwitch label="EPOS" name="epos" checked={formData.epos} onChange={handleChange} />
+            <ToggleSwitch label="POS" name="pos" checked={formData.pos} onChange={handleChange} />
             <ToggleSwitch label="Deliveroo" name="deliveroo" checked={formData.deliveroo} onChange={handleChange} />
             <ToggleSwitch label="Uber Eats" name="uberEats" checked={formData.uberEats} onChange={handleChange} />
             <ToggleSwitch label="Just Eat" name="justEat" checked={formData.justEat} onChange={handleChange} />
-          </div>
-        </section>
-
-        <section>
-          <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Tenant settings</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <InputField label="Country" name="country" value={formData.country} onChange={handleChange} placeholder="Enter country" error={errors.country} />
-            <InputField label="Currency" name="currency" value={formData.currency} onChange={handleChange} placeholder="Enter currency" error={errors.currency} />
-            <InputField label="Feedback email" name="feedbackEmail" type="email" value={formData.feedbackEmail} onChange={handleChange} placeholder="Enter feedback email" error={errors.feedbackEmail} />
           </div>
         </section>
 
@@ -527,12 +1191,14 @@ const NewTenantCreationWizard = () => {
             type="button"
             onClick={handleReset}
             className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-linear-blue-500 dark:bg-gray-700 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-600"
+            disabled={isSubmitting}
           >
             Reset
           </button>
           <button
             type="submit"
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-linear-blue-600 hover:bg-linear-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-linear-blue-500"
+            disabled={isSubmitting}
           >
             Create tenant in {getEnvironmentName(selectedEnvironment)}
           </button>
@@ -542,19 +1208,7 @@ const NewTenantCreationWizard = () => {
       {apiResponses.length > 0 && (
         <section className="mt-8">
           <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">API Responses</h2>
-          <div className="space-y-4">
-            {apiResponses.map((response, index) => (
-              <div key={index} className="border rounded-md p-4 bg-gray-50 dark:bg-gray-700">
-                <h3 className="font-semibold text-gray-800 dark:text-white">{response.name}</h3>
-                <p className="text-sm text-gray-600 dark:text-gray-300">Status: {response.status}</p>
-                <pre className="mt-2 text-sm text-gray-800 dark:text-gray-200 overflow-x-auto whitespace-pre-wrap break-words max-w-full">
-                  <code className="block p-2 bg-gray-100 dark:bg-gray-800 rounded">
-                    {JSON.stringify(response.data, null, 2)}
-                  </code>
-                </pre>
-              </div>
-            ))}
-          </div>
+          <ApiResponseAccordion responses={apiResponses} />
         </section>
       )}
     </div>

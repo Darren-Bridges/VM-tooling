@@ -24,11 +24,12 @@ function App() {
     // Check for both tokens in local storage
     const refreshToken = localStorage.getItem('refresh-token');
     const accessToken = localStorage.getItem('access-token');
+    const email = localStorage.getItem('email');
     if (refreshToken && accessToken) {
       setIsLoggedIn(true);
       // You might want to fetch the user email here if it's not stored in local storage
       // For now, we'll set a placeholder email
-      setUserEmail('user@example.com');
+      setUserEmail(email || '');
     }
   }, []);
 
@@ -50,6 +51,7 @@ function App() {
     localStorage.removeItem('refresh-token');
     localStorage.removeItem('access-token');
     localStorage.removeItem('selected-environment');
+    localStorage.removeItem('email');
   };
 
   return (

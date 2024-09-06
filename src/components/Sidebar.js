@@ -44,26 +44,6 @@ function Sidebar({ isOpen, onClose, userEmail, onLogout }) {
         </div>
         <ul className="py-4 flex-grow">
           <SidebarItem to="/" icon={HomeIcon} text="Home" onClick={onClose} />
-          <SidebarItem
-            icon={LanguageIcon}
-            text="Translations"
-            isOpen={isTranslationsOpen}
-            onClick={() => setIsTranslationsOpen(!isTranslationsOpen)}
-          >
-            <SidebarSubItem to="/translations/flatten" icon={ArrowsPointingInIcon} text="Flatten" onClick={onClose} />
-            <SidebarSubItem to="/translations/unflatten" icon={ArrowsPointingOutIcon} text="Unflatten" onClick={onClose} />
-          </SidebarItem>
-          <SidebarItem 
-            to="/customer-receipt-template-builder" 
-            icon={DocumentTextIcon} 
-            text={
-              <span className="flex items-center">
-                Receipt builder
-                <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold text-linear-blue-600 bg-linear-blue-100 rounded-full">Beta</span>
-              </span>
-            } 
-            onClick={onClose} 
-          />
           <SidebarItem 
             to="/new-tenant-creation-wizard" 
             icon={UserPlusIcon} 
@@ -75,6 +55,26 @@ function Sidebar({ isOpen, onClose, userEmail, onLogout }) {
             } 
             onClick={onClose} 
           />
+          <SidebarItem 
+            to="/customer-receipt-template-builder" 
+            icon={DocumentTextIcon} 
+            text={
+              <span className="flex items-center">
+                Receipt builder
+                <span className="ml-2 px-1.5 py-0.5 text-xs font-semibold text-linear-blue-600 bg-linear-blue-100 rounded-full">Beta</span>
+              </span>
+            } 
+            onClick={onClose} 
+          />
+          <SidebarItem
+            icon={LanguageIcon}
+            text="Translations"
+            isOpen={isTranslationsOpen}
+            onClick={() => setIsTranslationsOpen(!isTranslationsOpen)}
+          >
+            <SidebarSubItem to="/translations/flatten" icon={ArrowsPointingInIcon} text="Flatten" onClick={onClose} />
+            <SidebarSubItem to="/translations/unflatten" icon={ArrowsPointingOutIcon} text="Unflatten" onClick={onClose} />
+          </SidebarItem>
         </ul>
         <div className="p-4 border-t border-linear-gray-200 dark:border-linear-gray-700">
           <p className="text-sm text-linear-gray-600 dark:text-linear-gray-400 mb-2">{userEmail}</p>

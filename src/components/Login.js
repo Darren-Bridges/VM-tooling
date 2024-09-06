@@ -33,6 +33,7 @@ const Login = ({ onLogin, darkMode, toggleDarkMode }) => {
         // Save the refresh token and access token to local storage
         localStorage.setItem('refresh-token', data.payload.token.refresh);
         localStorage.setItem('access-token', data.payload.token.value);
+        localStorage.setItem('email', data.payload.user.email);
         
         // Save the selected environment to local storage
         localStorage.setItem('selected-environment', environment);
