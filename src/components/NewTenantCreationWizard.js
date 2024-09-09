@@ -7,7 +7,7 @@ import ConfigVariables from '../utils/ConfigVariables';
 import './Spinner.css';
 
 
-const InputField = ({ label, name, type = 'text', value, onChange, placeholder, suffix, error }) => (
+const InputField = ({ label, name, type = 'text', value, onChange, placeholder, suffix, error, noSymbolsOrSpaces = false }) => (
   <div className="relative">
     <label htmlFor={name} className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
       {label}
@@ -21,6 +21,11 @@ const InputField = ({ label, name, type = 'text', value, onChange, placeholder, 
         onChange={onChange}
         placeholder={placeholder}
         className={`input flex-grow ${error ? 'border-red-500' : ''}`}
+        onKeyPress={noSymbolsOrSpaces ? (e) => {
+          if (!/[a-zA-Z0-9]/.test(e.key)) {
+            e.preventDefault();
+          }
+        } : undefined}
       />
       {suffix && <span className="ml-2 text-gray-600 dark:text-gray-400">{suffix}</span>}
     </div>
@@ -110,18 +115,19 @@ const NewTenantCreationWizard = () => {
   const [apiResponses, setApiResponses] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [totalSteps, setTotalSteps] = useState(0);
-  const [completedSteps, setCompletedSteps] = useState(0);
 
-  const updateProgress = () => {
-    setCompletedSteps(prev => prev + 1);
-    const newProgress = Math.min(Math.round((completedSteps + 1) / totalSteps * 100), 100);
-    setProgress(newProgress);
-  };
 
   // Add this line to get the selected environment
   const selectedEnvironment = localStorage.getItem('selected-environment') || 'feature-branch';
+
+  // Define host suffixes based on the environment
+  const hostSuffixes = {
+    'feature-branch': 'vmos-qa.com',
+    'demo': 'demo-demo.com',
+    'live': 'vmos.io'
+  };
+
+  const getHostSuffix = () => hostSuffixes[selectedEnvironment] || hostSuffixes['feature-branch'];
 
   // Define baseUrl based on the selected environment
   const baseUrls = {
@@ -145,21 +151,6 @@ const NewTenantCreationWizard = () => {
     }
   };
 
-  const countryCodes = {
-    "UK": "44",
-    "Germany": "49",
-    "Belgium": "32",
-    "France": "33",
-    "Ireland": "353"
-  };
-
-  const timeZones = {
-    "UK": "Europe/London",
-    "Germany": "Europe/Berlin",
-    "Belgium": "Europe/Brussels",
-    "France": "Europe/Paris",
-    "Ireland": "Europe/Dublin"
-  };
 
   const generateRandomPassword = () => {
     const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+";
@@ -173,9 +164,16 @@ const NewTenantCreationWizard = () => {
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData(prevState => {
+      let newValue = type === 'checkbox' ? checked : value;
+
+      // Sanitize input for tenantHost and storeSlug
+      if (name === 'tenantHost' || name === 'storeSlug') {
+        newValue = newValue.toLowerCase().replace(/[^a-z0-9]/g, '');
+      }
+
       const newState = {
         ...prevState,
-        [name]: type === 'checkbox' ? checked : value
+        [name]: newValue
       };
 
       // If tenantName is being changed, update related fields
@@ -389,8 +387,7 @@ const NewTenantCreationWizard = () => {
           data: error.message
         }]);
       }
-      
-      updateProgress();
+    
     }
 
     return menuUUIDs;
@@ -502,18 +499,6 @@ const NewTenantCreationWizard = () => {
     e.preventDefault();
     if (validateForm()) {
       setIsSubmitting(true);
-      setProgress(0);
-      setCompletedSteps(0);
-
-      // Calculate total steps
-      let steps = 7; // Base steps (tenant, host, diet clone, admin user, store, menus, menu hours)
-      steps += Object.values(formData).filter(value => typeof value === 'boolean' && value).length; // Channels
-      steps += defaultFeatureFlags.length; // Feature flags
-      const tenantSettings = await getTenantSettings();
-      steps += tenantSettings.length; // Tenant settings
-      const storeSettings = await getStoreSettings();
-      steps += storeSettings.length; // Store settings
-      setTotalSteps(steps);
 
       const { tenantName, tenantAlias, tenantDescription, hostName, adminFirstName, adminLastName, adminEmail, adminPassword, storeName, storeSlug, storeAddress, latitude, longitude, storeEmail } = formData;
       
@@ -545,7 +530,6 @@ const NewTenantCreationWizard = () => {
 
         const tenantData = await tenantResponse.json();
         responses.push({ name: 'Tenant Creation', status: tenantResponse.status, data: tenantData });
-        updateProgress();
 
         if (tenantResponse.status === 201) {
           console.log('Tenant created successfully');
@@ -562,14 +546,13 @@ const NewTenantCreationWizard = () => {
               },
               body: JSON.stringify([
                 {
-                  value: `${hostName}.vmos.io`
+                  value: `${hostName}.${getHostSuffix()}`
                 }
               ]),
             });
 
             const hostData = await hostResponse.json();
             responses.push({ name: 'Host Creation', status: hostResponse.status, data: hostData });
-            updateProgress();
 
             if (!hostResponse.ok) {
               console.error('Failed to create tenant host:', hostData);
@@ -594,7 +577,6 @@ const NewTenantCreationWizard = () => {
 
             const dietCloneData = await dietCloneResponse.json();
             responses.push({ name: 'Diet Clone', status: dietCloneResponse.status, data: dietCloneData });
-            updateProgress();
 
             if (!dietCloneResponse.ok) {
               console.error('Failed to clone diets:', dietCloneData);
@@ -631,7 +613,6 @@ const NewTenantCreationWizard = () => {
 
             const createUserData = await createUserResponse.json();
             responses.push({ name: 'Admin User Creation', status: createUserResponse.status, data: createUserData });
-            updateProgress();
 
             if (!createUserResponse.ok) {
               console.error('Failed to create admin user:', createUserData);
@@ -652,7 +633,7 @@ const NewTenantCreationWizard = () => {
                 tenantUUID: tenantUuid,
                 name: storeName,
                 slug: storeSlug,
-                url: `${hostName}.vmos.io`,
+                url: `${hostName}.${getHostSuffix()}`,
                 long: longitude,
                 address: storeAddress,
                 lat: latitude,
@@ -667,7 +648,6 @@ const NewTenantCreationWizard = () => {
 
             const createStoreData = await createStoreResponse.json();
             responses.push({ name: 'Store Creation', status: createStoreResponse.status, data: createStoreData });
-            updateProgress();
 
             if (createStoreResponse.ok) {
               storeUuid = createStoreData.payload.uuid; // Assign storeUuid here
@@ -676,12 +656,10 @@ const NewTenantCreationWizard = () => {
               // Create menus
               const menuUUIDs = await createMenus(tenantUuid);
               responses.push({ name: 'Menu Creation', status: 'Success', data: menuUUIDs });
-              updateProgress();
 
               // Create menu hours
               const menuHoursResponse = await createMenuHours(tenantUuid, storeUuid, menuUUIDs);
               responses.push(menuHoursResponse);
-              updateProgress();
 
               if (menuHoursResponse.status === 200) {
                 console.log('Menu hours created successfully');
@@ -718,7 +696,6 @@ const NewTenantCreationWizard = () => {
 
               const createFeatureFlagData = await createFeatureFlagResponse.json();
               responses.push({ name: `Feature Flag Creation (${featureFlag.name})`, status: createFeatureFlagResponse.status, data: createFeatureFlagData });
-              updateProgress();
 
               if (!createFeatureFlagResponse.ok) {
                 console.error(`Failed to create feature flag ${featureFlag.name}:`, createFeatureFlagData);
@@ -753,7 +730,6 @@ const NewTenantCreationWizard = () => {
 
             const createChannelsData = await createChannelsResponse.json();
             responses.push({ name: 'Channel Creation', status: createChannelsResponse.status, data: createChannelsData });
-            updateProgress();
 
             if (createChannelsResponse.ok) {
               console.log('Channels added successfully');
@@ -787,7 +763,6 @@ const NewTenantCreationWizard = () => {
 
               const createSettingData = await createSettingResponse.json();
               responses.push({ name: `Tenant Setting Creation (${setting.name})`, status: createSettingResponse.status, data: createSettingData });
-              updateProgress();
 
               if (!createSettingResponse.ok) {
                 console.error(`Failed to create tenant setting ${setting.name}:`, createSettingData);
@@ -822,7 +797,6 @@ const NewTenantCreationWizard = () => {
 
                 const createStoreSettingData = await createStoreSettingResponse.json();
                 responses.push({ name: `Store Setting Creation (${setting.name})`, status: createStoreSettingResponse.status, data: createStoreSettingData });
-                updateProgress();
 
                 if (!createStoreSettingResponse.ok) {
                   console.error(`Failed to create store setting ${setting.name}:`, createStoreSettingData);
@@ -848,7 +822,6 @@ const NewTenantCreationWizard = () => {
         responses.push({ name: 'Overall Process', status: 'Error', data: error.message });
       } finally {
         setIsSubmitting(false);
-        setProgress(100);
       }
 
       setApiResponses(responses);
@@ -864,6 +837,15 @@ const NewTenantCreationWizard = () => {
           pauseOnHover: true,
           draggable: true,
         });
+      } else {
+        toast.success('Tenant created successfully!', {
+          position: "top-right",
+          autoClose: 10000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }); 
       }
     } else {
       console.log('Form has errors, please correct them');
@@ -1076,8 +1058,8 @@ const NewTenantCreationWizard = () => {
           <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Tenant & URL</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField label="Tenant name" name="tenantName" value={formData.tenantName} onChange={handleChange} placeholder="Enter tenant name" error={errors.tenantName} />
-            <InputField label="Tenant alias" name="tenantAlias" value={formData.tenantAlias} onChange={handleChange} placeholder="Enter tenant alias" error={errors.tenantAlias} />
-            <InputField label="Host name" name="hostName" value={formData.hostName} onChange={handleChange} placeholder="Enter host name" suffix=".vmos.io" error={errors.hostName} />
+            <InputField label="Tenant alias" name="tenantAlias" value={formData.tenantAlias} onChange={handleChange} placeholder="Enter tenant alias" error={errors.tenantAlias} noSymbolsOrSpaces={true} />
+            <InputField label="Host name" name="hostName" value={formData.hostName} onChange={handleChange} placeholder="Enter host name" suffix={`.${getHostSuffix()}`} error={errors.hostName} />
             <InputField label="Tenant description" name="tenantDescription" value={formData.tenantDescription} onChange={handleChange} placeholder="Enter tenant description" error={errors.tenantDescription} />
           </div>
         </section>
@@ -1164,7 +1146,7 @@ const NewTenantCreationWizard = () => {
           <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Store</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField label="Store name" name="storeName" value={formData.storeName} onChange={handleChange} placeholder="Enter store name" error={errors.storeName} />
-            <InputField label="Store slug" name="storeSlug" value={formData.storeSlug} onChange={handleChange} placeholder="Enter store slug" error={errors.storeSlug} />
+            <InputField label="Store slug" name="storeSlug" value={formData.storeSlug} onChange={handleChange} placeholder="Enter store slug" error={errors.storeSlug} noSymbolsOrSpaces={true} />
             <InputField label="Store address" name="storeAddress" value={formData.storeAddress} onChange={handleChange} placeholder="Enter store address" error={errors.storeAddress} />
             <InputField label="Store email" name="storeEmail" type="email" value={formData.storeEmail} onChange={handleChange} placeholder="Enter store email" error={errors.storeEmail} />
             <InputField label="Latitude" name="latitude" value={formData.latitude} onChange={handleChange} placeholder="Enter latitude" error={errors.latitude} />

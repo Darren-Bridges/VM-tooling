@@ -36,7 +36,7 @@ function Home() {
           onClick={() => navigate('/new-tenant-creation-wizard')}
         >
           <h2 className="text-xl font-semibold text-gray-700 dark:text-gray-200 mb-2">NTCW</h2>
-          <p className="text-gray-600 dark:text-gray-400">New Transaction Creation Wizard for streamlined transaction setup.</p>
+          <p className="text-gray-600 dark:text-gray-400">New Tenant Creation Wizard for streamlined tenant setup.</p>
         </div>
       </div>
     </div>

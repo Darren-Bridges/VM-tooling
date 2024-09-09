@@ -2,10 +2,6 @@ const StoreSettingConfig = {
     storeSettings: async () => {
       const displayRecentOrders = JSON.stringify({"default":{"maxNumberOfOrders":5,"maxNumberOfDays":21},"kiosk":{}});
       const orderAccessories = JSON.stringify({"default":[{"name":"Bag"},{"name":"Cutlery"}]});
-      const highlightLateOrders = JSON.stringify([
-        { "color": "#FFA775", "time": "180" },
-        { "color": "#F65D5D", "time": "300" }
-      ]);
       const orderCancellation = JSON.stringify({
         "online": { "default": { "days": 2, "time": "17:30" } },
         "delivery": { "default": { "days": 2, "time": "17:30" } }
@@ -49,6 +45,7 @@ const StoreSettingConfig = {
         {"name": "preorder.delivery.ordersPerSlot", "value": "3", "uuid":"e1f9a824-e60c-11ea-a79c-0680387720c2"},
         {"name": "preorder.delivery.availableDays", "value": "7", "uuid":"e127a188-e60c-11ea-a79c-0680387720c2"},
         {"name": "preorder.delivery.asap.enabled", "value": "1", "uuid":"e28a4a44-e60c-11ea-a79c-0680387720c2"},
+        {"name": "preorder.delivery.fee", "value": deliveryFee, "uuid":"b381a0a4-7297-11ea-b7ad-06013dcb6ef2"},
         {"name": "hide.stores.delivery.unavailable", "value": "1", "uuid":"f346efc9-3386-4bc6-b640-0ac106a1b042"},
         {"name": "order.price.restriction", "value": orderPriceRestriction, "uuid":"96416d0a-7295-11ea-b7ad-06013dcb6ef2"}
       ];
