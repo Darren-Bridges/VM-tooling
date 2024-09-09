@@ -103,6 +103,7 @@ const NewTenantCreationWizard = () => {
     kiosk: false,
     delivery: false,
     pos: false,
+    posType: '',
     deliveroo: false,
     uberEats: false,
     justEat: false,
@@ -204,9 +205,9 @@ const NewTenantCreationWizard = () => {
       if (name === 'country') {
         switch (value) {
           case 'UK':
+          case 'Ireland':
             newState.currency = 'GBP';
             break;
-          case 'Ireland':
           case 'Germany':
           case 'Belgium':
           case 'France':
@@ -215,6 +216,11 @@ const NewTenantCreationWizard = () => {
           default:
             newState.currency = '';
         }
+      }
+
+      // If POS is unchecked, reset posType
+      if (name === 'pos' && !checked) {
+        newState.posType = '';
       }
 
       return newState;
@@ -252,6 +258,10 @@ const NewTenantCreationWizard = () => {
     }
     if (formData.longitude && !coordRegex.test(formData.longitude)) {
       newErrors.longitude = 'Must be a valid number';
+    }
+
+    if (formData.pos && !formData.posType) {
+      newErrors.posType = 'Please select a POS type';
     }
 
     setErrors(newErrors);
@@ -873,6 +883,7 @@ const NewTenantCreationWizard = () => {
       kiosk: false,
       delivery: false,
       pos: false,
+      posType: '',
       deliveroo: false,
       uberEats: false,
       justEat: false,
@@ -904,6 +915,7 @@ const NewTenantCreationWizard = () => {
       kiosk: true,
       delivery: true,
       pos: true,
+      posType: 'QSR',
       deliveroo: true,
       uberEats: true,
       justEat: true,
@@ -1059,7 +1071,7 @@ const NewTenantCreationWizard = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <InputField label="Tenant name" name="tenantName" value={formData.tenantName} onChange={handleChange} placeholder="Enter tenant name" error={errors.tenantName} />
             <InputField label="Tenant alias" name="tenantAlias" value={formData.tenantAlias} onChange={handleChange} placeholder="Enter tenant alias" error={errors.tenantAlias} noSymbolsOrSpaces={true} />
-            <InputField label="Host name" name="hostName" value={formData.hostName} onChange={handleChange} placeholder="Enter host name" suffix={`.${getHostSuffix()}`} error={errors.hostName} />
+            <InputField label="Host name" name="hostName" value={formData.hostName} onChange={handleChange} placeholder="Enter host name" suffix={`.${getHostSuffix()}`} error={errors.hostName} noSymbolsOrSpaces={true} />
             <InputField label="Tenant description" name="tenantDescription" value={formData.tenantDescription} onChange={handleChange} placeholder="Enter tenant description" error={errors.tenantDescription} />
           </div>
         </section>
@@ -1167,6 +1179,28 @@ const NewTenantCreationWizard = () => {
             <ToggleSwitch label="Just Eat" name="justEat" checked={formData.justEat} onChange={handleChange} />
           </div>
         </section>
+
+        {formData.pos && (
+          <section>
+            <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">POS Configuration</h2>
+            <div className="grid grid-cols-1 gap-6">
+              <div>
+                <label htmlFor="posType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">POS Type</label>
+                <select
+                  name="posType"
+                  value={formData.posType}
+                  onChange={handleChange}
+                  className={`input flex-grow ${errors.posType ? 'border-red-500' : ''}`}
+                >
+                  <option value="">Select POS Type</option>
+                  <option value="QSR">Quick Service Restaurant (QSR)</option>
+                  <option value="FSR">Full Service Restaurant (FSR)</option>
+                </select>
+                {errors.posType && <p className="text-red-500 text-sm mt-1">{errors.posType}</p>}
+              </div>
+            </div>
+          </section>
+        )}
 
         <div className="flex justify-end space-x-4">
           <button

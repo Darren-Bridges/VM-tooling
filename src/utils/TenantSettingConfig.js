@@ -1,4 +1,15 @@
 import { getSelectedEnvironment } from '../utils/environmentUtils'; // You may need to create this utility file
+import posKitchenScreens from '../posSettings/kitchenScreens';
+import pos2config from '../posSettings/config';
+import basketActions from '../posSettings/basketActions';
+import autoPrintConfigs from '../posSettings/autoPrintConfigs';
+import printTemplateMapping from '../posSettings/printTemplateMapping';
+import cashManagement from '../posSettings/cashManagement';
+import fireEvents from '../posSettings/fireEvents';
+import remoteDebug from '../posSettings/remoteDebug';
+import openOrders from '../posSettings/openOrders';
+import serviceCharge from '../posSettings/serviceCharge';
+import floorPlan from '../posSettings/floorPlan';
 
 const TenantSettingConfig = {
   // Define host suffixes based on the environment
@@ -32,7 +43,7 @@ const TenantSettingConfig = {
 
     const hostSuffix = TenantSettingConfig.getHostSuffix();
 
-    return [
+    const settings = [
       {"name": "allergens.disclaimer.enabled", "value": "1", "uuid":"1c51b708-2105-11ea-b645-06dea2640edc"},
       {"name": "app.webUrl", "value": `${formData.hostName}.${hostSuffix}`, "uuid":"bd18ada4-2e73-404c-bc0a-1365ff6f4989"},
       {"name": "basket.show.customizations", "value": "1", "uuid":"04520d1e-2bcc-11ea-975d-06dea2640edc"},
@@ -65,6 +76,89 @@ const TenantSettingConfig = {
       {"name": "vat.rate.eatIn", "value":"20", "uuid":"01b51e0e-c81b-4d2e-87f3-90ee2b053520" },
       {"name": "vat.rate.takeaway", "value": "20", "uuid":"5a082bce-201d-4edd-94af-f0418e275b4a" }		
     ];
+
+    if (formData.pos) {
+        settings.push({
+            name: "pos2.config",
+            uuid: "5a9888f9-4d96-470f-be4e-971ad951273a",
+            value: JSON.stringify(pos2config[formData.posType])
+        });
+        settings.push({
+          name: "pos2.kitchenScreens",
+          uuid: "964defda-59cf-42a6-9923-f60efa5fd532",
+          value: JSON.stringify(posKitchenScreens[formData.posType])
+        });
+        settings.push({
+          name: "pos2.basketActions",
+          uuid: "cdbd58eb-b854-4bd3-add6-92695f6a755a",
+          value: JSON.stringify(basketActions[formData.posType])
+        });
+        settings.push({
+          name: "pos2.autoPrintConfigs",
+          uuid: "d201e61f-e4a5-4fa7-935a-b4dcf2189840",
+          value: JSON.stringify(autoPrintConfigs[formData.posType])
+        });
+        settings.push({
+          name: "pos2.printTemplateMapping",
+          uuid: "5bb703df-e8a0-4a32-afc1-0d372bf12da5",
+          value: JSON.stringify(printTemplateMapping[formData.posType])
+        });
+        settings.push({
+          name: "pos2.cashManagement",
+          uuid: "cbf2b95f-7ca8-47e8-af81-4a88094cfe56",
+          value: JSON.stringify(cashManagement[formData.posType])
+        });
+        settings.push({
+          name: "pos.improvedOrderStateMachine",
+          uuid: "33aafa70-8887-4bf3-818c-49183b9c3b09",
+          value: 1
+        });
+        settings.push({
+          name: "fireEvents",
+          uuid: "51888485-40af-4629-b407-0392afc4a5d4",
+          value: JSON.stringify(fireEvents[formData.posType])
+        });
+        settings.push({
+          name: "pos2.remoteDebug",
+          uuid: "f1ea537a-001d-4343-b65b-1a5334a84073",
+          value: JSON.stringify(remoteDebug[formData.posType])
+        });
+        settings.push({
+          name: "kds.screens.settings",
+          uuid: "d4584aa9-b918-4dab-884f-1def2d79bc07",
+          value: 0
+        });
+        settings.push({
+          name: "pos2.standAlone",
+          uuid: "630e8282-2b80-422f-ba02-1e4feb14d748",
+          value: 1
+        });
+    }
+
+    if (formData.pos && formData.posType === 'FSR') {
+        settings.push({
+          name: "order.openOrders",
+          uuid: "bbf31924-e61e-4278-88b4-fd8e99c66e11",
+          value: JSON.stringify(openOrders[formData.posType])
+        });
+        settings.push({
+          name: "optional.service.charge",
+          uuid: "140adc4b-e72e-497a-8181-ccd6dfdd91fc",
+          value: JSON.stringify(serviceCharge[formData.posType])
+        });
+        settings.push({
+          name: "pos2.floorPlan",
+          uuid: "c6e97fcd-10bc-47ee-8fa2-d7489d288559",
+          value: JSON.stringify(floorPlan[formData.posType])
+        });
+        settings.push({
+          name: "pos2.offlineMode",
+          uuid: "194c05d8-d000-47a7-97a3-89279ec48324",
+          value: 1
+        });
+    }
+
+    return settings;
   },
   
   kioskTenantSettings: async () => {
