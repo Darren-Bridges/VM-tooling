@@ -1,4 +1,4 @@
-import { getSelectedEnvironment } from '../utils/environmentUtils'; // You may need to create this utility file
+import { getSelectedEnvironment } from '../../../utils/environmentUtils'; // You may need to create this utility file
 import posKitchenScreens from '../posSettings/kitchenScreens';
 import pos2config from '../posSettings/config';
 import basketActions from '../posSettings/basketActions';

@@ -4,9 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 import AvailableFields from './AvailableFields';
 import TemplateBuilder from './TemplateBuilder';
 import ReceiptPreview from './ReceiptPreview';
-import generateXML from './generateXML';
-import availableFieldsData from './availableFieldsData';
-import parseReceiptXML from './parseReceiptXML';
+import generateXML from '../utils/generateXML';
+import availableFieldsData from '../utils/availableFieldsData';
+import parseReceiptXML from '../utils/parseReceiptXML';
 
 const CustomerReceiptTemplateBuilder = () => {
   const [availableFields] = useState(availableFieldsData);

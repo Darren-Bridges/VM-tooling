@@ -4,7 +4,7 @@ import { EyeIcon, EyeSlashIcon, ChevronDownIcon, ChevronUpIcon, CheckCircleIcon,
 import TenantSettingConfig from '../utils/TenantSettingConfig';
 import StoreSettingConfig from '../utils/StoreSettingConfig';
 import ConfigVariables from '../utils/ConfigVariables';
-import './Spinner.css';
+import '../utils/Spinner.css';
 import { getBundlePayload } from '../utils/bundlePayload';
 
 
