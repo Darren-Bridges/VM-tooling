@@ -40,6 +40,10 @@ const pos2config = {
           "icon": "star",
           "printTemplate": "customerReceipt"
         },
+        "enableBillSplitting":{
+          "byItems": true,
+          "byCovers": true
+        },
         "reporting": {
           "enabled": true
         },

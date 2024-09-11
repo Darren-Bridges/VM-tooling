@@ -111,7 +111,7 @@ const TenantSettingConfig = {
         settings.push({
           name: "pos.improvedOrderStateMachine",
           uuid: "33aafa70-8887-4bf3-818c-49183b9c3b09",
-          value: 1
+          value: "1"
         });
         settings.push({
           name: "fireEvents",
@@ -126,12 +126,12 @@ const TenantSettingConfig = {
         settings.push({
           name: "kds.screens.settings",
           uuid: "d4584aa9-b918-4dab-884f-1def2d79bc07",
-          value: 0
+          value: "0"
         });
         settings.push({
           name: "pos2.standAlone",
           uuid: "630e8282-2b80-422f-ba02-1e4feb14d748",
-          value: 1
+          value: "1"
         });
     }
 
@@ -154,7 +154,7 @@ const TenantSettingConfig = {
         settings.push({
           name: "pos2.offlineMode",
           uuid: "194c05d8-d000-47a7-97a3-89279ec48324",
-          value: 1
+          value: "1"
         });
     }
 
